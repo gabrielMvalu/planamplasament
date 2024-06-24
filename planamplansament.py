@@ -37,9 +37,9 @@ if mode == "Manual":
         for i in range(num_points):
             col1, col2 = st.columns(2)
             with col1:
-                x = st.number_input(f"Coordonata X pentru punctul {i + 1}:", key=f"x_{i}")
+                x = st.number_input(f"Coordonata X pentru punctul {i + 1}:", format="%.3f", key=f"x_{i}")
             with col2:
-                y = st.number_input(f"Coordonata Y pentru punctul {i + 1}:", key=f"y_{i}")
+                y = st.number_input(f"Coordonata Y pentru punctul {i + 1}:", format="%.3f", key=f"y_{i}")
             coords.append((x, y))
 
         if st.button("Plotează Graficul"):
