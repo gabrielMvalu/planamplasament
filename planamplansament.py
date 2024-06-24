@@ -72,6 +72,7 @@ def place_machines_in_polygon(machines, polygon):
     legend = []
     label = 'A'
     for name, length, width, quantity in machines:
+        added_to_legend = False
         for _ in range(quantity):
             placed = False
             while not placed:
@@ -81,7 +82,9 @@ def place_machines_in_polygon(machines, polygon):
                 rect = (x, y, length, width)
                 if is_rect_inside_polygon(rect, polygon) and all(not is_overlapping(rect, p) for p in placements):
                     placements.append((x, y, length, width, label))
-                    legend.append((label, name, quantity, f"{length} x {width}"))
+                    if not added_to_legend:
+                        legend.append((label, name, quantity, f"{length} x {width}"))
+                        added_to_legend = True
                     placed = True
         label = chr(ord(label) + 1)  # Incrementăm labelul
     return placements, legend
