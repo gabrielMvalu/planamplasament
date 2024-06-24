@@ -104,20 +104,21 @@ if mode == "Manual":
             
     st.header("Introducerea Dimensiunilor Utilajelor")
 
-    machines_input = st.text_area("Introdu lista de utilaje și dimensiunile acestora, în formatul dat:")
+    # Introducere număr de utilaje
+    num_machines = st.number_input("Numărul de utilaje:", min_value=1, step=1)
 
-    if st.button("Plotează Graficul cu Utilaje"):
-        if machines_input:
-            machines_lines = machines_input.split('\n')
-            machines = []
-            for line in machines_lines:
-                parts = line.split('-')
-                if len(parts) == 4:
-                    name, count, length, width = parts
-                    name = name.strip()
-                    count = int(count.strip().split()[0])
-                    length, width = map(float, length.strip().split('x'))
-                    machines.append((name, length, width, count))
+    if num_machines:
+        machines = []
+        for i in range(num_machines):
+            st.subheader(f"Utilaj {chr(65 + i)}")  # Identificator: A, B, C, etc.
+            name = st.text_input(f"Nume utilaj {chr(65 + i)}:")
+            count = st.number_input(f"Număr bucăți {chr(65 + i)}:", min_value=1, step=1)
+            length = st.number_input(f"Lungime {chr(65 + i)} (m):", format="%.3f")
+            width = st.number_input(f"Lățime {chr(65 + i)} (m):", format="%.3f")
+            machines.append((chr(65 + i), name, length, width, count))
 
+        if st.button("Plotează Graficul cu Utilaje"):
             if coords and machines:
-                plot_polygon_with_machines(coords, machines)
+                machines_for_plotting = [(name, length, width, count) for _, name, length, width, count in machines]
+                plot_polygon_with_machines(coords, machines_for_plotting)
+
