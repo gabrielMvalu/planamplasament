@@ -62,7 +62,13 @@ def plot_polygon_with_machines(polygon_coords, machines):
         total_area += machine_area
         for _ in range(quantity):
             placed = False
+            iteration_count = 0  # Adăugăm un contor de iterații pentru a preveni buclele infinite
+            max_iterations = 1000  # Stabilim un număr maxim de iterații pentru a opri bucla dacă devine infinită
             while not placed:
+                iteration_count += 1
+                if iteration_count > max_iterations:
+                    st.error("Utilajele nu pot fi amplasate pe terenul specificat. Verificați dimensiunile și suprafața totală.")
+                    return
                 rect = (current_x, current_y, length, width)
                 if is_rect_inside_polygon(rect, poly_shape) and all(not is_rect_overlap(rect, placed_rect) for placed_rect in placed_rects):
                     rect_patch = patches.Rectangle((current_x, current_y), length, width, linewidth=1, edgecolor='b', facecolor='none')
