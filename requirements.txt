@@ -1,3 +1,4 @@
 streamlit
 matplotlib
 streamlit-canvas
+PyPDF2
