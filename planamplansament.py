@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import Polygon, box
 import random
+import pandas as pd
 
 # Dimensiunile utilajelor (Lungime x Lățime)
 machines = [
@@ -68,6 +69,7 @@ def is_overlapping(rect1, rect2):
 # Funcție pentru a plasa automat dreptunghiurile în interiorul poligonului
 def place_machines_in_polygon(machines, polygon):
     placements = []
+    legend = []
     label = 'A'
     for name, length, width, quantity in machines:
         for _ in range(quantity):
@@ -79,9 +81,10 @@ def place_machines_in_polygon(machines, polygon):
                 rect = (x, y, length, width)
                 if is_rect_inside_polygon(rect, polygon) and all(not is_overlapping(rect, p) for p in placements):
                     placements.append((x, y, length, width, label))
+                    legend.append((label, name, quantity, f"{length} x {width}"))
                     placed = True
         label = chr(ord(label) + 1)  # Incrementăm labelul
-    return placements
+    return placements, legend
 
 # Definim coordonatele poligonului
 polygon_coords = [
@@ -98,7 +101,11 @@ polygon = Polygon(polygon_coords)
 st.title("Aranjarea utilajelor pe plot")
 
 # Plasăm automat utilajele în poligon
-placements = place_machines_in_polygon(machines, polygon)
+placements, legend = place_machines_in_polygon(machines, polygon)
 
 # Plottăm poligonul și utilajele
 plot_polygon_with_machines(polygon_coords, placements)
+
+# Creăm tabelul cu legenda
+legend_df = pd.DataFrame(legend, columns=["Identificator", "Denumire Utilaj", "Numar Bucati", "Dimensiune (L x l)"])
+st.table(legend_df)
