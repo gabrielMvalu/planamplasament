@@ -1,3 +1,6 @@
 streamlit
 matplotlib
 PyPDF2
+streamlit-drawable-canvas
+svgpathtools
+svgwrite
