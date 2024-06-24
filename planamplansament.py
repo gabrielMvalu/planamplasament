@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from shapely.geometry import Polygon, box
 
 # Dimensiunile utilajelor (Lungime x Lățime)
 machines = [
@@ -21,13 +22,6 @@ machines = [
     ("Container de tip birou", 6.058, 2.438, 1),
     ("Generator", 3.00, 1.50, 1)
 ]
-
-# Creăm lista de utilaje pentru desen
-machine_list = []
-for machine in machines:
-    name, length, width, quantity = machine
-    for _ in range(quantity):
-        machine_list.append((name, length, width))
 
 # Funcție pentru plottarea poligonului și utilajelor
 def plot_polygon_with_machines(polygon_coords, placements):
@@ -59,6 +53,11 @@ def plot_polygon_with_machines(polygon_coords, placements):
     plt.grid(True)
     st.pyplot(fig)
 
+# Funcție pentru a verifica dacă dreptunghiul este în interiorul poligonului
+def is_rect_inside_polygon(rect, polygon):
+    rect_box = box(rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3])
+    return polygon.contains(rect_box)
+
 # Definim coordonatele poligonului
 polygon_coords = [
     (399485.06, 385140.713),
@@ -68,6 +67,8 @@ polygon_coords = [
     (399492.273, 385120.567),
     (399496.347, 385138.383)
 ]
+
+polygon = Polygon(polygon_coords)
 
 st.title("Aranjarea utilajelor pe plot")
 
@@ -90,10 +91,13 @@ if canvas_result.json_data is not None:
     for obj in objects:
         x, y = obj["left"], obj["top"]
         w, h = obj["width"], obj["height"]
-        placements.append((x, y, w, h))
+        rect = (x, y, w, h)
+        if is_rect_inside_polygon(rect, polygon):
+            placements.append(rect)
 
 # Plottăm poligonul și utilajele
 plot_polygon_with_machines(polygon_coords, placements)
 
 st.write("Trage și plasează dreptunghiurile pe plot pentru a reprezenta utilajele.")
+
 
