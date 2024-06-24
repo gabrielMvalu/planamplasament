@@ -2,13 +2,12 @@ import streamlit as st
 import tempfile
 from plotting import plot_polygon, plot_polygon_with_machines
 from pdf_generation import generate_pdf
-from utils import is_rect_inside_polygon, is_rect_overlap
 
 def main():
     st.title("Generare Document Word pentru Utilaje")
 
-    # Selectare mod de generare
-    mode = st.radio("Selectează modul de generare a documentului Word:", ("Manual", "Automat"))
+    # Selectare mod de generare în bara laterală
+    mode = st.sidebar.radio("Selectează modul de generare a documentului Word:", ("Manual", "Automat"))
 
     col1, col2 = st.columns(2)
 
@@ -19,14 +18,11 @@ def main():
             # Introducere număr de colțuri
             num_points = st.number_input("Numărul de colțuri ale poligonului:", min_value=3, step=1)
 
+            coords = []
             if num_points:
-                coords = []
                 for i in range(num_points):
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        x = st.number_input(f"Coordonata X pentru punctul {i + 1}:", format="%.3f", key=f"x_{i}")
-                    with col2:
-                        y = st.number_input(f"Coordonata Y pentru punctul {i + 1}:", format="%.3f", key=f"y_{i}")
+                    x = st.number_input(f"Coordonata X pentru punctul {i + 1}:", format="%.3f", key=f"x_{i}")
+                    y = st.number_input(f"Coordonata Y pentru punctul {i + 1}:", format="%.3f", key=f"y_{i}")
                     coords.append((x, y))
 
                 if st.button("Plotează Graficul"):
@@ -70,4 +66,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
