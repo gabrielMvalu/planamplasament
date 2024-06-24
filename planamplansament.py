@@ -58,6 +58,12 @@ def is_rect_inside_polygon(rect, polygon):
     rect_box = box(rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3])
     return polygon.contains(rect_box)
 
+# Funcție pentru a verifica suprapunerea dintre două dreptunghiuri
+def is_overlapping(rect1, rect2):
+    r1 = box(rect1[0], rect1[1], rect1[0] + rect1[2], rect1[1] + rect1[3])
+    r2 = box(rect2[0], rect2[1], rect2[0] + rect2[2], rect2[1] + rect2[3])
+    return r1.intersects(r2)
+
 # Funcție pentru a plasa automat dreptunghiurile în interiorul poligonului
 def place_machines_in_polygon(machines, polygon):
     placements = []
@@ -69,7 +75,7 @@ def place_machines_in_polygon(machines, polygon):
                 x = random.uniform(minx, maxx - length)
                 y = random.uniform(miny, maxy - width)
                 rect = (x, y, length, width)
-                if is_rect_inside_polygon(rect, polygon):
+                if is_rect_inside_polygon(rect, polygon) and all(not is_overlapping(rect, p) for p in placements):
                     placements.append(rect)
                     placed = True
     return placements
@@ -93,6 +99,7 @@ placements = place_machines_in_polygon(machines, polygon)
 
 # Plottăm poligonul și utilajele
 plot_polygon_with_machines(polygon_coords, placements)
+
 
 
 
