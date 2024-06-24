@@ -5,10 +5,10 @@ from pdf_generation import generate_pdf
 from utils import is_rect_inside_polygon, is_rect_overlap
 
 def main():
-    st.title("Generare Document Word pentru Utilaje")
+    st.title(':blue[Generare PDF Plan Amplasament cu legenda]')
 
     # Selectare mod de generare
-    mode = st.sidebar.radio("Selectează modul de generare a documentului Word:", ("Manual", "Automat"))
+    mode = st.sidebar.radio("Selectează modul de adaugare a datelor:", ("Manual", "Automat"))
 
     if mode == "Manual":
         st.header("Introducerea Coordonatelor Poligonului")
