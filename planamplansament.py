@@ -2,6 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import Polygon, box
+from fpdf import FPDF
 
 def plot_polygon(polygon_coords):
     fig, ax = plt.subplots()
@@ -31,7 +32,7 @@ def is_rect_overlap(rect1, rect2):
     rect2_box = box(rect2[0], rect2[1], rect2[0] + rect2[2], rect2[1] + rect2[3])
     return rect1_box.intersects(rect2_box)
 
-def plot_polygon_with_machines(polygon_coords, machines):
+def plot_polygon_with_machines(polygon_coords, machines, save_path=None):
     fig, ax = plt.subplots()
     polygon_coords.append(polygon_coords[0])  # Închide poligonul
     x_coords, y_coords = zip(*polygon_coords)
@@ -68,7 +69,7 @@ def plot_polygon_with_machines(polygon_coords, machines):
                 iteration_count += 1
                 if iteration_count > max_iterations:
                     st.error("Utilajele nu pot fi amplasate pe terenul specificat. Verificați dimensiunile și suprafața totală.")
-                    return
+                    return False
                 rect = (current_x, current_y, length, width)
                 if is_rect_inside_polygon(rect, poly_shape) and all(not is_rect_overlap(rect, placed_rect) for placed_rect in placed_rects):
                     rect_patch = patches.Rectangle((current_x, current_y), length, width, linewidth=1, edgecolor='b', facecolor='none')
@@ -87,11 +88,11 @@ def plot_polygon_with_machines(polygon_coords, machines):
                         current_x += length + spacing_x
                 if current_x + length > max(x_coords) and current_y + width > max(y_coords):
                     st.error("Utilajele nu pot fi amplasate pe terenul specificat. Verificați dimensiunile și suprafața totală.")
-                    return
+                    return False
 
     if total_area > polygon_area:
         st.error("Suprafața totală a utilajelor depășește suprafața terenului. Verificați dimensiunile și numărul de utilaje.")
-        return
+        return False
 
     ax.set_aspect('equal', adjustable='box')
     ax.set_xticks([])
@@ -99,8 +100,32 @@ def plot_polygon_with_machines(polygon_coords, machines):
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.title('Graficul terenului cu utilaje')
+    
+    if save_path:
+        plt.savefig(save_path)
+    
     st.pyplot(fig)
     polygon_coords.pop()  # Elimină punctul adăugat pentru închidere
+    return True
+
+def generate_pdf(legend_text, image_path, output_path):
+    pdf = FPDF()
+    pdf.add_page()
+
+    # Add plot image to PDF
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, 'Graficul Terenului cu Utilaje', 0, 1, 'C')
+    pdf.image(image_path, x=10, y=30, w=190)
+
+    # Add legend to PDF
+    pdf.ln(120)
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, 'Legenda', 0, 1, 'L')
+    pdf.set_font('Arial', '', 12)
+    pdf.multi_cell(0, 10, legend_text)
+
+    # Save PDF
+    pdf.output(output_path)
 
 st.title("Generare Document Word pentru Utilaje")
 
@@ -133,6 +158,7 @@ if mode == "Manual":
 
     if num_machines:
         machines = []
+        legend_text = ""
         for i in range(num_machines):
             st.subheader(f"Utilaj {chr(65 + i)}")  # Identificator: A, B, C, etc.
             name = st.text_input(f"Nume utilaj {chr(65 + i)}:")
@@ -140,7 +166,19 @@ if mode == "Manual":
             length = st.number_input(f"Lungime {chr(65 + i)} (m):", format="%.3f")
             width = st.number_input(f"Lățime {chr(65 + i)} (m):", format="%.3f")
             machines.append((chr(65 + i), length, width, count))
+            legend_text += f"{chr(65 + i)}: {name} - {count} buc - {length} x {width} m\n"
 
         if st.button("Plotează Graficul cu Utilaje"):
             if coords and machines:
-                plot_polygon_with_machines(coords, machines)
+                image_path = '/mnt/data/plot_with_machines.png'
+                success = plot_polygon_with_machines(coords, machines, save_path=image_path)
+                if success:
+                    pdf_output_path = '/mnt/data/plot_with_legend.pdf'
+                    generate_pdf(legend_text, image_path, pdf_output_path)
+                    st.success('PDF generat cu succes!')
+                    st.download_button(
+                        label="Descarcă PDF",
+                        data=open(pdf_output_path, "rb").read(),
+                        file_name="plot_with_legend.pdf",
+                        mime="application/pdf"
+                    )
