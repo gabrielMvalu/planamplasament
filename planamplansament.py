@@ -49,7 +49,7 @@ def plot_polygon_with_machines(polygon_coords, machines):
     current_x, current_y = start_x, start_y
     
     for machine in machines:
-        name, length, width, quantity = machine
+        identifier, length, width, quantity = machine
         for _ in range(quantity):
             placed = False
             while not placed:
@@ -57,7 +57,7 @@ def plot_polygon_with_machines(polygon_coords, machines):
                 if is_rect_inside_polygon(rect, poly_shape):
                     rect_patch = patches.Rectangle((current_x, current_y), length, width, linewidth=1, edgecolor='b', facecolor='none')
                     ax.add_patch(rect_patch)
-                    ax.text(current_x + length / 2, current_y + width / 2, name, fontsize=8, ha='center')
+                    ax.text(current_x + length / 2, current_y + width / 2, identifier, fontsize=8, ha='center')
                     current_y += width + spacing_y
                     if current_y + width > max(y_coords):
                         current_y = start_y
@@ -115,10 +115,10 @@ if mode == "Manual":
             count = st.number_input(f"Număr bucăți {chr(65 + i)}:", min_value=1, step=1)
             length = st.number_input(f"Lungime {chr(65 + i)} (m):", format="%.3f")
             width = st.number_input(f"Lățime {chr(65 + i)} (m):", format="%.3f")
-            machines.append((chr(65 + i), name, length, width, count))
+            machines.append((chr(65 + i), length, width, count))
 
         if st.button("Plotează Graficul cu Utilaje"):
             if coords and machines:
-                machines_for_plotting = [(name, length, width, count) for _, name, length, width, count in machines]
-                plot_polygon_with_machines(coords, machines_for_plotting)
+                plot_polygon_with_machines(coords, machines)
+
 
