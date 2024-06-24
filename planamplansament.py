@@ -53,9 +53,13 @@ def plot_polygon_with_machines(polygon_coords, machines):
     start_x, start_y = min(x_coords), min(y_coords)  # Poziția de început în interiorul poligonului
     spacing_x, spacing_y = 0.5, 0.5  # Spațiul între elemente
     current_x, current_y = start_x, start_y
+    total_area = 0
+    polygon_area = poly_shape.area
     
     for machine in machines:
         identifier, length, width, quantity = machine
+        machine_area = length * width * quantity
+        total_area += machine_area
         for _ in range(quantity):
             placed = False
             while not placed:
@@ -63,7 +67,7 @@ def plot_polygon_with_machines(polygon_coords, machines):
                 if is_rect_inside_polygon(rect, poly_shape) and all(not is_rect_overlap(rect, placed_rect) for placed_rect in placed_rects):
                     rect_patch = patches.Rectangle((current_x, current_y), length, width, linewidth=1, edgecolor='b', facecolor='none')
                     ax.add_patch(rect_patch)
-                    ax.text(current_x + length / 2, current_y + width / 2, identifier, fontsize=8, ha='center')
+                    ax.text(current_x + length / 2, current_y + width / 2, identifier, fontsize=8, ha='center', va='center')
                     placed_rects.append(rect)
                     current_y += width + spacing_y
                     if current_y + width > max(y_coords):
@@ -75,6 +79,13 @@ def plot_polygon_with_machines(polygon_coords, machines):
                     if current_y + width > max(y_coords):
                         current_y = start_y
                         current_x += length + spacing_x
+                if current_x + length > max(x_coords) and current_y + width > max(y_coords):
+                    st.error("Utilajele nu pot fi amplasate pe terenul specificat. Verificați dimensiunile și suprafața totală.")
+                    return
+
+    if total_area > polygon_area:
+        st.error("Suprafața totală a utilajelor depășește suprafața terenului. Verificați dimensiunile și numărul de utilaje.")
+        return
 
     ax.set_aspect('equal', adjustable='box')
     ax.set_xticks([])
