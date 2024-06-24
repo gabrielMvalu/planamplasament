@@ -4,6 +4,10 @@ import matplotlib.patches as patches
 from shapely.geometry import Polygon, box
 import random
 import pandas as pd
+from fpdf import FPDF
+from io import BytesIO
+from docx import Document
+from docx.shared import Inches
 
 # Dimensiunile utilajelor (Lungime x Lățime)
 machines = [
@@ -53,7 +57,7 @@ def plot_polygon_with_machines(polygon_coords, placements):
     plt.ylabel('Y')
     plt.title('Aranjarea automată a utilajelor pe plot')
     plt.grid(True)
-    st.pyplot(fig)
+    return fig
 
 # Funcție pentru a verifica dacă dreptunghiul este în interiorul poligonului
 def is_rect_inside_polygon(rect, polygon):
@@ -89,6 +93,47 @@ def place_machines_in_polygon(machines, polygon):
         label = chr(ord(label) + 1)  # Incrementăm labelul
     return placements, legend
 
+# Funcție pentru a genera PDF
+def generate_pdf(fig, legend_df):
+    buffer = BytesIO()
+    fig.savefig(buffer, format='png')
+    buffer.seek(0)
+    image = buffer.read()
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.image(image, x=10, y=10, w=190)
+    pdf.set_xy(10, 150)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="Legenda:", ln=True, align="L")
+
+    for _, row in legend_df.iterrows():
+        pdf.cell(200, 10, txt=f"{row['Identificator']}: {row['Denumire Utilaj']} - {row['Numar Bucati']} buc - {row['Dimensiune (L x l)']}", ln=True, align="L")
+
+    return pdf.output(dest="S").encode("latin1")
+
+# Funcție pentru a genera Word
+def generate_word(fig, legend_df):
+    buffer = BytesIO()
+    fig.savefig(buffer, format='png')
+    buffer.seek(0)
+    image = buffer.read()
+
+    doc = Document()
+    doc.add_heading('Aranjarea automată a utilajelor pe plot', 0)
+
+    # Adăugăm imaginea
+    doc.add_picture(BytesIO(image), width=Inches(6))
+
+    doc.add_heading('Legenda:', level=1)
+    for _, row in legend_df.iterrows():
+        doc.add_paragraph(f"{row['Identificator']}: {row['Denumire Utilaj']} - {row['Numar Bucati']} buc - {row['Dimensiune (L x l)']}")
+
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
 # Definim coordonatele poligonului
 polygon_coords = [
     (399485.06, 385140.713),
@@ -107,8 +152,18 @@ st.title("Aranjarea utilajelor pe plot")
 placements, legend = place_machines_in_polygon(machines, polygon)
 
 # Plottăm poligonul și utilajele
-plot_polygon_with_machines(polygon_coords, placements)
+fig = plot_polygon_with_machines(polygon_coords, placements)
 
 # Creăm tabelul cu legenda
 legend_df = pd.DataFrame(legend, columns=["Identificator", "Denumire Utilaj", "Numar Bucati", "Dimensiune (L x l)"])
 st.table(legend_df)
+
+# Adăugăm butoanele pentru descărcare PDF și Word
+if st.button("Descarcă PDF"):
+    pdf_data = generate_pdf(fig, legend_df)
+    st.download_button(label="Descarcă PDF", data=pdf_data, file_name="utilaje.pdf", mime="application/pdf")
+
+if st.button("Descarcă Word"):
+    word_data = generate_word(fig, legend_df)
+    st.download_button(label="Descarcă Word", data=word_data, file_name="utilaje.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
