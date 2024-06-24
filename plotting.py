@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import Polygon
 import streamlit as st
+from utils import is_rect_inside_polygon, is_rect_overlap
 
 def plot_polygon(polygon_coords):
     fig, ax = plt.subplots()
