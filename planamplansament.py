@@ -1,9 +1,17 @@
-import streamlit as st
-from streamlit_canvas import st_canvas
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-# Dimensiunile utilajelor (Lungime x Lățime)
+# Definim coordonatele poligonului
+polygon_coords = [
+    (399485.06, 385140.713),
+    (399483.58, 385140.062),
+    (399477.304, 385124.575),
+    (399484.305, 385122.896),
+    (399492.273, 385120.567),
+    (399496.347, 385138.383)
+]
+
+# Definim dimensiunile utilajelor (Lungime x Lățime)
 machines = [
     ("Platforma pentru lucru la inaltime - tip foarfeca 1", 1.66, 0.76, 6),
     ("Platforma pentru lucru la inaltime - tip foarfeca 2", 2.26, 1.16, 2),
@@ -22,22 +30,8 @@ machines = [
     ("Generator", 3.00, 1.50, 1)
 ]
 
-st.title("Aranjarea utilajelor pe plot")
-
-# Desenăm canvasul
-canvas_result = st_canvas(
-    fill_color="rgba(255, 165, 0, 0.3)",
-    stroke_width=1,
-    background_color="#eee",
-    update_streamlit=True,
-    height=400,
-    width=600,
-    drawing_mode="rect",
-    key="canvas"
-)
-
 # Funcție pentru plottarea poligonului și utilajelor
-def plot_polygon_with_machines(polygon_coords, machines, placements):
+def plot_polygon_with_machines(polygon_coords, machines):
     fig, ax = plt.subplots(figsize=(10, 8))
 
     # Plotăm poligonul
@@ -56,31 +50,22 @@ def plot_polygon_with_machines(polygon_coords, machines, placements):
     ax.spines['bottom'].set_visible(False)
 
     # Plasăm utilajele
-    for (x, y, w, h) in placements:
-        rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor='none')
-        ax.add_patch(rect)
+    start_x, start_y = min(x_coords), min(y_coords)
+    offset_x, offset_y = 5, 5  # Offset pentru plasare
+    for machine_name, length, width, quantity in machines:
+        for _ in range(quantity):
+            rect = patches.Rectangle((start_x + offset_x, start_y + offset_y), length, width, linewidth=1, edgecolor='r', facecolor='none')
+            ax.add_patch(rect)
+            offset_x += length + 1  # Actualizăm offset-ul pentru următorul utilaj
+            if offset_x + length > max(x_coords) - min(x_coords):
+                offset_x = 5
+                offset_y += width + 1
 
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.title('Aranjarea automată a utilajelor pe plot')
     plt.grid(True)
-    st.pyplot(fig)
+    plt.show()
 
-# Definim coordonatele poligonului
-polygon_coords = [
-    (399485.06, 385140.713),
-    (399483.58, 385140.062),
-    (399477.304, 385124.575),
-    (399484.305, 385122.896),
-    (399492.273, 385120.567),
-    (399496.347, 385138.383)
-]
-
-if canvas_result.json_data is not None:
-    objects = canvas_result.json_data["objects"]
-    placements = [(obj["left"], obj["top"], obj["width"], obj["height"]) for obj in objects]
-    plot_polygon_with_machines(polygon_coords, machines, placements)
-else:
-    plot_polygon_with_machines(polygon_coords, machines, [])
-
-st.write("Trage și plasează dreptunghiurile pe plot pentru a reprezenta utilajele.")
+# Apelăm funcția pentru plottare
+plot_polygon_with_machines(polygon_coords, machines)
