@@ -26,6 +26,11 @@ def is_rect_inside_polygon(rect, polygon):
     rect_box = box(rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3])
     return polygon.contains(rect_box)
 
+def is_rect_overlap(rect1, rect2):
+    rect1_box = box(rect1[0], rect1[1], rect1[0] + rect1[2], rect1[1] + rect1[3])
+    rect2_box = box(rect2[0], rect2[1], rect2[0] + rect2[2], rect2[1] + rect2[3])
+    return rect1_box.intersects(rect2_box)
+
 def plot_polygon_with_machines(polygon_coords, machines):
     fig, ax = plt.subplots()
     polygon_coords.append(polygon_coords[0])  # Închide poligonul
@@ -44,6 +49,7 @@ def plot_polygon_with_machines(polygon_coords, machines):
     poly_shape = Polygon(polygon_coords)
     
     # Plasarea utilajelor în interiorul poligonului
+    placed_rects = []  # Lista pentru dreptunghiurile plasate
     start_x, start_y = min(x_coords), min(y_coords)  # Poziția de început în interiorul poligonului
     spacing_x, spacing_y = 0.5, 0.5  # Spațiul între elemente
     current_x, current_y = start_x, start_y
@@ -54,10 +60,11 @@ def plot_polygon_with_machines(polygon_coords, machines):
             placed = False
             while not placed:
                 rect = (current_x, current_y, length, width)
-                if is_rect_inside_polygon(rect, poly_shape):
+                if is_rect_inside_polygon(rect, poly_shape) and all(not is_rect_overlap(rect, placed_rect) for placed_rect in placed_rects):
                     rect_patch = patches.Rectangle((current_x, current_y), length, width, linewidth=1, edgecolor='b', facecolor='none')
                     ax.add_patch(rect_patch)
                     ax.text(current_x + length / 2, current_y + width / 2, identifier, fontsize=8, ha='center')
+                    placed_rects.append(rect)
                     current_y += width + spacing_y
                     if current_y + width > max(y_coords):
                         current_y = start_y
@@ -120,5 +127,3 @@ if mode == "Manual":
         if st.button("Plotează Graficul cu Utilaje"):
             if coords and machines:
                 plot_polygon_with_machines(coords, machines)
-
-
