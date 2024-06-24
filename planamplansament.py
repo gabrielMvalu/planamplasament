@@ -7,6 +7,11 @@ def plot_polygon(polygon_coords):
     polygon_coords.append(polygon_coords[0])  # Închide poligonul
     x_coords, y_coords = zip(*polygon_coords)
     ax.plot(x_coords, y_coords, marker='o')
+
+    # Adăugăm numerele pentru fiecare punct
+    for i, (x, y) in enumerate(polygon_coords[:-1]):
+        ax.text(x, y, str(i + 1), fontsize=12, ha='right')
+
     ax.set_aspect('equal', adjustable='box')
     ax.set_xticks([])
     ax.set_yticks([])
