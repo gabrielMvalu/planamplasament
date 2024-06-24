@@ -1,5 +1,5 @@
 import streamlit as st
-import streamlit_drawable_canvas as canvas
+from streamlit_canvas import st_canvas
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
@@ -25,7 +25,7 @@ machines = [
 st.title("Aranjarea utilajelor pe plot")
 
 # Desenăm canvasul
-canvas_result = canvas.st_canvas(
+canvas_result = st_canvas(
     fill_color="rgba(255, 165, 0, 0.3)",
     stroke_width=1,
     background_color="#eee",
@@ -84,3 +84,4 @@ else:
     plot_polygon_with_machines(polygon_coords, machines, [])
 
 st.write("Trage și plasează dreptunghiurile pe plot pentru a reprezenta utilajele.")
+
