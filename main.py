@@ -11,7 +11,7 @@ def main():
     mode = st.sidebar.radio("Selectează modul de adaugare a datelor:", ("Manual", "Automat"))
 
     if mode == "Manual":
-        st.header("Introducerea Coordonatelor Poligonului")
+        st.header("Adauga Coordonatele Poligonului")
 
         # Introducere număr de colțuri
         num_points = st.number_input("Numărul de colțuri ale poligonului:", min_value=3, step=1)
@@ -29,7 +29,7 @@ def main():
             if st.button("Plotează Graficul"):
                 plot_polygon(coords)
                 
-        st.header("Introducerea Dimensiunilor Utilajelor")
+        st.header("Adauga Dimensiunile Utilajelor")
 
         # Introducere număr de utilaje
         num_machines = st.number_input("Numărul de utilaje:", min_value=1, step=1)
