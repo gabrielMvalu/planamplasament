@@ -84,4 +84,3 @@ else:
     plot_polygon_with_machines(polygon_coords, machines, [])
 
 st.write("Trage și plasează dreptunghiurile pe plot pentru a reprezenta utilajele.")
-
