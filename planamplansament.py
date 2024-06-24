@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import Polygon, box
 from fpdf import FPDF
+import tempfile
 
 def plot_polygon(polygon_coords):
     fig, ax = plt.subplots()
@@ -170,10 +171,12 @@ if mode == "Manual":
 
         if st.button("Plotează Graficul cu Utilaje"):
             if coords and machines:
-                image_path = '/mnt/data/plot_with_machines.png'
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
+                    image_path = tmpfile.name
                 success = plot_polygon_with_machines(coords, machines, save_path=image_path)
                 if success:
-                    pdf_output_path = '/mnt/data/plot_with_legend.pdf'
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmpfile:
+                        pdf_output_path = tmpfile.name
                     generate_pdf(legend_text, image_path, pdf_output_path)
                     st.success('PDF generat cu succes!')
                     st.download_button(
