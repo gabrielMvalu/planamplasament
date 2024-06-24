@@ -8,7 +8,7 @@ def main():
     st.title("Generare Document Word pentru Utilaje")
 
     # Selectare mod de generare
-    mode = st.radio("Selectează modul de generare a documentului Word:", ("Manual", "Automat"))
+    mode = st.sidebar.radio("Selectează modul de generare a documentului Word:", ("Manual", "Automat"))
 
     if mode == "Manual":
         st.header("Introducerea Coordonatelor Poligonului")
