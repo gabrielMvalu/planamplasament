@@ -1,8 +1,8 @@
 import streamlit as st
-from streamlit_drawable_canvas import st_canvas
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import Polygon, box
+import random
 
 # Dimensiunile utilajelor (Lungime x Lățime)
 machines = [
@@ -58,6 +58,22 @@ def is_rect_inside_polygon(rect, polygon):
     rect_box = box(rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3])
     return polygon.contains(rect_box)
 
+# Funcție pentru a plasa automat dreptunghiurile în interiorul poligonului
+def place_machines_in_polygon(machines, polygon):
+    placements = []
+    for name, length, width, quantity in machines:
+        for _ in range(quantity):
+            placed = False
+            while not placed:
+                minx, miny, maxx, maxy = polygon.bounds
+                x = random.uniform(minx, maxx - length)
+                y = random.uniform(miny, maxy - width)
+                rect = (x, y, length, width)
+                if is_rect_inside_polygon(rect, polygon):
+                    placements.append(rect)
+                    placed = True
+    return placements
+
 # Definim coordonatele poligonului
 polygon_coords = [
     (399485.06, 385140.713),
@@ -72,32 +88,11 @@ polygon = Polygon(polygon_coords)
 
 st.title("Aranjarea utilajelor pe plot")
 
-# Desenăm canvasul
-canvas_result = st_canvas(
-    fill_color="rgba(255, 165, 0, 0.3)",
-    stroke_width=1,
-    background_color="#eee",
-    update_streamlit=True,
-    height=400,
-    width=600,
-    drawing_mode="rect",
-    key="canvas"
-)
-
-# Extragem plasamentele utilajelor
-placements = []
-if canvas_result.json_data is not None:
-    objects = canvas_result.json_data["objects"]
-    for obj in objects:
-        x, y = obj["left"], obj["top"]
-        w, h = obj["width"], obj["height"]
-        rect = (x, y, w, h)
-        if is_rect_inside_polygon(rect, polygon):
-            placements.append(rect)
+# Plasăm automat utilajele în poligon
+placements = place_machines_in_polygon(machines, polygon)
 
 # Plottăm poligonul și utilajele
 plot_polygon_with_machines(polygon_coords, placements)
 
-st.write("Trage și plasează dreptunghiurile pe plot pentru a reprezenta utilajele.")
 
 
