@@ -43,9 +43,10 @@ def plot_polygon_with_machines(polygon_coords, placements):
     ax.spines['bottom'].set_visible(False)
 
     # Plasăm utilajele
-    for (x, y, w, h) in placements:
+    for (x, y, w, h, label) in placements:
         rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor='none')
         ax.add_patch(rect)
+        ax.text(x + w / 2, y + h / 2, label, ha='center', va='center', fontsize=8, color='black')
 
     plt.xlabel('X')
     plt.ylabel('Y')
@@ -67,6 +68,7 @@ def is_overlapping(rect1, rect2):
 # Funcție pentru a plasa automat dreptunghiurile în interiorul poligonului
 def place_machines_in_polygon(machines, polygon):
     placements = []
+    label = 'A'
     for name, length, width, quantity in machines:
         for _ in range(quantity):
             placed = False
@@ -76,8 +78,9 @@ def place_machines_in_polygon(machines, polygon):
                 y = random.uniform(miny, maxy - width)
                 rect = (x, y, length, width)
                 if is_rect_inside_polygon(rect, polygon) and all(not is_overlapping(rect, p) for p in placements):
-                    placements.append(rect)
+                    placements.append((x, y, length, width, label))
                     placed = True
+        label = chr(ord(label) + 1)  # Incrementăm labelul
     return placements
 
 # Definim coordonatele poligonului
@@ -99,7 +102,3 @@ placements = place_machines_in_polygon(machines, polygon)
 
 # Plottăm poligonul și utilajele
 plot_polygon_with_machines(polygon_coords, placements)
-
-
-
-
