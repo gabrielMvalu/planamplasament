@@ -5,3 +5,6 @@ streamlit-drawable-canvas
 svgpathtools
 svgwrite
 shapely
+pandas
+fpdf
+python-docx
