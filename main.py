@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import tempfile
 from plotting import plot_polygon, plot_polygon_with_machines
 from pdf_generation import generate_pdf
@@ -18,12 +19,19 @@ def main():
             # Introducere număr de colțuri
             num_points = st.number_input("Numărul de colțuri ale poligonului:", min_value=3, step=1)
 
-            coords = []
             if num_points:
-                for i in range(num_points):
-                    x = st.number_input(f"Coordonata X pentru punctul {i + 1}:", format="%.3f", key=f"x_{i}")
-                    y = st.number_input(f"Coordonata Y pentru punctul {i + 1}:", format="%.3f", key=f"y_{i}")
-                    coords.append((x, y))
+                # Creare tabel cu coordonate
+                coords_df = pd.DataFrame({
+                    'X': [0.0] * num_points,
+                    'Y': [0.0] * num_points
+                })
+                coords_df = st.data_editor(
+                    coords_df,
+                    num_rows="fixed",
+                    use_container_width=True
+                )
+
+                coords = coords_df.values.tolist()
 
                 if st.button("Plotează Graficul"):
                     plot_polygon(coords)
@@ -66,5 +74,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
