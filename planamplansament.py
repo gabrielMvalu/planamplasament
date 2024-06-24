@@ -8,25 +8,6 @@ from io import BytesIO
 from docx import Document
 from docx.shared import Inches
 
-# Dimensiunile utilajelor (Lungime x Lățime)
-machines = [
-    ("Platforma pentru lucru la inaltime - tip foarfeca 1", 1.66, 0.76, 6),
-    ("Platforma pentru lucru la inaltime - tip foarfeca 2", 2.26, 1.16, 2),
-    ("Platforma pentru lucru la inaltime", 2.26, 0.81, 2),
-    ("Platforma pentru lucru la inaltime - tip foarfeca 3", 2.26, 0.81, 2),
-    ("Platforma pentru lucru la inaltime cu brat articulat 1", 1.83, 0.76, 2),
-    ("Platforma pentru lucru la inaltime cu brat articulat 2", 1.42, 0.76, 2),
-    ("Platforma pentru lucru la inaltime cu brat articulat 3", 1.12, 0.70, 2),
-    ("Rampa mobila", 1.83, 0.72, 1),
-    ("Stalpi de iluminat fotovoltaici mobili", 0.114, 0.114, 4),
-    ("Toaleta ecologica", 2.20, 1.60, 1),
-    ("Drujba", 0.90, 0.25, 1),
-    ("Tocator resturi vegetale", 0.707, 0.388, 1),
-    ("Buldoexcavator", 3.40, 1.41, 1),
-    ("Container de tip birou", 6.058, 2.438, 1),
-    ("Generator", 3.00, 1.50, 1)
-]
-
 # Funcție pentru plottarea poligonului și utilajelor
 def plot_polygon_with_machines(polygon_coords, placements):
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -114,19 +95,20 @@ def generate_word(fig, legend_df):
     buffer.seek(0)
     return buffer
 
-# Definim coordonatele poligonului
-polygon_coords = [
-    (399485.06, 385140.713),
-    (399483.58, 385140.062),
-    (399477.304, 385124.575),
-    (399484.305, 385122.896),
-    (399492.273, 385120.567),
-    (399496.347, 385138.383)
-]
+st.title("Aranjarea utilajelor pe plot")
+
+# Introducem coordonatele poligonului
+st.header("Coordonatele poligonului")
+polygon_input = st.text_area("Introduceți coordonatele poligonului (format: x1,y1 x2,y2 ...):")
+polygon_coords = [tuple(map(float, coord.split(','))) for coord in polygon_input.split()]
+
+# Introducem detaliile utilajelor
+st.header("Detaliile utilajelor")
+machines_data = st.text_area("Introduceți detaliile utilajelor (format: Nume,Lungime,Lățime,Număr Bucăți):")
+machines = [tuple(line.split(',')) for line in machines_data.split('\n')]
+machines = [(name, float(length), float(width), int(quantity)) for name, length, width, quantity in machines]
 
 polygon = Polygon(polygon_coords)
-
-st.title("Aranjarea utilajelor pe plot")
 
 # Plasăm automat utilajele în poligon
 placements, legend = place_machines_in_polygon(machines, polygon)
@@ -142,4 +124,3 @@ st.table(legend_df)
 if st.button("Descarcă Word"):
     word_data = generate_word(fig, legend_df)
     st.download_button(label="Descarcă Word", data=word_data, file_name="utilaje.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-
