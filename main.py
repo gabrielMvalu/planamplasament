@@ -34,7 +34,36 @@ def manual_mode():
 
         if st.button("Plotează Graficul"):
             plot_polygon(coords)
-            
+    
+    add_machines_section(coords)
+
+def automatic_mode():
+    st.header("Încarca PDF Extras de Carte Funciara")
+
+    uploaded_file = st.file_uploader("Alege un PDF", type=["pdf"])
+
+    coords = []
+    if uploaded_file is not None:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmpfile:
+            tmpfile.write(uploaded_file.getbuffer())
+            temp_pdf_path = tmpfile.name
+
+        st.write("PDF încărcat cu succes. Coordonatele vor fi extrase automat.")
+
+        # Aici vom adăuga codul pentru a trimite PDF-ul la API-ul OpenAI GPT Vision
+        coordinates = extract_coordinates_from_pdf(temp_pdf_path)
+
+        if coordinates:
+            st.write("Coordonatele au fost extrase cu succes.")
+            st.write(coordinates)
+            coords = coordinates
+            plot_polygon(coords)
+        else:
+            st.write("Nu s-au putut extrage coordonatele din PDF.")
+
+    add_machines_section(coords)
+
+def add_machines_section(coords):
     st.header("Adauga Dimensiunile Utilajelor")
 
     # Introducere număr de utilaje
@@ -69,28 +98,6 @@ def manual_mode():
                         mime="application/pdf"
                     )
 
-def automatic_mode():
-    st.header("Încarca PDF Extras de Carte Funciara")
-
-    uploaded_file = st.file_uploader("Alege un PDF", type=["pdf"])
-
-    if uploaded_file is not None:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmpfile:
-            tmpfile.write(uploaded_file.getbuffer())
-            temp_pdf_path = tmpfile.name
-
-        st.write("PDF încărcat cu succes. Coordonatele vor fi extrase automat.")
-
-        # Aici vom adăuga codul pentru a trimite PDF-ul la API-ul OpenAI GPT Vision
-        coordinates = extract_coordinates_from_pdf(temp_pdf_path)
-
-        if coordinates:
-            st.write("Coordonatele au fost extrase cu succes.")
-            st.write(coordinates)
-            plot_polygon(coordinates)
-        else:
-            st.write("Nu s-au putut extrage coordonatele din PDF.")
-
 def extract_coordinates_from_pdf(pdf_path):
     api_key = "YOUR_OPENAI_API_KEY"
     url = "https://api.openai.com/v1/engines/davinci-codex/completions"
@@ -123,3 +130,4 @@ def parse_coordinates(response_data):
 
 if __name__ == "__main__":
     main()
+
