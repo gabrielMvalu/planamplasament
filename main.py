@@ -1,133 +1,119 @@
 import streamlit as st
-import tempfile
-from plotting import plot_polygon, plot_polygon_with_machines
-from pdf_generation import generate_pdf
-from utils import is_rect_inside_polygon, is_rect_overlap
-import requests
+import plotly.graph_objects as go
+import pandas as pd
+import numpy as np
 
-def main():
-    st.title(':blue[Generare PDF Plan Amplasament cu legenda]')
+# Initialize session state
+if 'equipment' not in st.session_state:
+    st.session_state.equipment = None
 
-    # Selectare mod de generare
-    mode = st.sidebar.radio("Selectează modul de adaugare a datelor:", ("Manual", "Automat"))
+# Define the polygon coordinates
+polygon_coords = [
+    (399485.06, 385140.713),
+    (399483.58, 385140.062),
+    (399477.304, 385124.575),
+    (399484.305, 385122.896),
+    (399492.273, 385120.567),
+    (399496.347, 385138.383),
+    (399485.06, 385140.713)  # Closing the polygon
+]
 
-    if mode == "Manual":
-        manual_mode()
-    elif mode == "Automat":
-        automatic_mode()
+# Define equipment data
+equipment_data = [
+    {"name": "Platforma tip foarfeca 1", "count": 6, "width": 1.66, "height": 0.76},
+    {"name": "Platforma tip foarfeca 2", "count": 2, "width": 2.26, "height": 1.16},
+    {"name": "Platforma pentru lucru la inaltime", "count": 2, "width": 2.26, "height": 0.81},
+    {"name": "Platforma tip foarfeca 3", "count": 2, "width": 2.26, "height": 0.81},
+    {"name": "Platforma cu brat articulat 1", "count": 2, "width": 1.83, "height": 0.76},
+    {"name": "Platforma cu brat articulat 2", "count": 2, "width": 1.42, "height": 0.76},
+    {"name": "Platforma cu brat articulat 3", "count": 2, "width": 1.12, "height": 0.70},
+    {"name": "Rampa mobila", "count": 1, "width": 1.83, "height": 0.72},
+    {"name": "Stalpi de iluminat fotovoltaici", "count": 4, "width": 0.114, "height": 0.114},
+    {"name": "Toaleta ecologica", "count": 1, "width": 2.20, "height": 1.60},
+    {"name": "Drujba", "count": 1, "width": 0.90, "height": 0.25},
+    {"name": "Tocator resturi vegetale", "count": 1, "width": 0.707, "height": 0.388},
+    {"name": "Buldoexcavator", "count": 1, "width": 3.40, "height": 1.41},
+    {"name": "Container de tip birou", "count": 1, "width": 6.058, "height": 2.438},
+    {"name": "Generator", "count": 1, "width": 3, "height": 1.5},
+]
 
-def manual_mode():
-    st.header("Adauga Coordonatele Poligonului")
+def initialize_equipment():
+    equipment = []
+    for i, item in enumerate(equipment_data):
+        for j in range(item['count']):
+            equipment.append({
+                'id': f"{i}-{j}",
+                'name': item['name'],
+                'width': item['width'],
+                'height': item['height'],
+                'x': 10 + (i * 50),
+                'y': 10 + (j * 50)
+            })
+    return pd.DataFrame(equipment)
 
-    # Introducere număr de colțuri
-    num_points = st.number_input("Numărul de colțuri ale poligonului:", min_value=3, step=1)
+def create_plot(df):
+    fig = go.Figure()
 
-    if num_points:
-        coords = []
-        for i in range(num_points):
-            col1, col2 = st.columns(2)
-            with col1:
-                x = st.number_input(f"Coordonata X pentru punctul {i + 1}:", format="%.3f", key=f"x_{i}")
-            with col2:
-                y = st.number_input(f"Coordonata Y pentru punctul {i + 1}:", format="%.3f", key=f"y_{i}")
-            coords.append((x, y))
+    # Add the polygon
+    fig.add_trace(go.Scatter(
+        x=[coord[0] for coord in polygon_coords],
+        y=[coord[1] for coord in polygon_coords],
+        fill="toself",
+        fillcolor="lightblue",
+        line=dict(color="blue"),
+        name="Land Parcel"
+    ))
 
-        if st.button("Plotează Graficul"):
-            plot_polygon(coords)
-    
-    add_machines_section(coords)
+    # Add equipment rectangles
+    for _, equip in df.iterrows():
+        fig.add_trace(go.Scatter(
+            x=[equip['x'], equip['x']+equip['width'], equip['x']+equip['width'], equip['x'], equip['x']],
+            y=[equip['y'], equip['y'], equip['y']+equip['height'], equip['y']+equip['height'], equip['y']],
+            fill="toself",
+            fillcolor="rgba(255, 0, 0, 0.5)",
+            line=dict(color="red"),
+            name=equip['name'],
+            customdata=[equip['id']],
+            hoverinfo="name"
+        ))
 
-def automatic_mode():
-    st.header("Încarca PDF Extras de Carte Funciara")
-
-    uploaded_file = st.file_uploader("Alege un PDF", type=["pdf"])
-
-    coords = []
-    if uploaded_file is not None:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmpfile:
-            tmpfile.write(uploaded_file.getbuffer())
-            temp_pdf_path = tmpfile.name
-
-        st.write("PDF încărcat cu succes. Coordonatele vor fi extrase automat.")
-
-        # Aici vom adăuga codul pentru a trimite PDF-ul la API-ul OpenAI GPT Vision
-        coordinates = extract_coordinates_from_pdf(temp_pdf_path)
-
-        if coordinates:
-            st.write("Coordonatele au fost extrase cu succes.")
-            st.write(coordinates)
-            coords = coordinates
-            plot_polygon(coords)
-        else:
-            st.write("Nu s-au putut extrage coordonatele din PDF.")
-
-    add_machines_section(coords)
-
-def add_machines_section(coords):
-    st.header("Adauga Dimensiunile Utilajelor")
-
-    # Introducere număr de utilaje
-    num_machines = st.number_input("Numărul de utilaje:", min_value=1, step=1)
-
-    if num_machines:
-        machines = []
-        legend_text = ""
-        for i in range(num_machines):
-            st.subheader(f"Utilaj {chr(65 + i)}")  # Identificator: A, B, C, etc.
-            name = st.text_input(f"Nume utilaj {chr(65 + i)}:")
-            count = st.number_input(f"Număr bucăți {chr(65 + i)}:", min_value=1, step=1)
-            length = st.number_input(f"Lungime {chr(65 + i)} (m):", format="%.3f")
-            width = st.number_input(f"Lățime {chr(65 + i)} (m):", format="%.3f")
-            machines.append((chr(65 + i), length, width, count))
-            legend_text += f"{chr(65 + i)}: {name} - {count} buc - {length} x {width} m\n"
-
-        if st.button("Plotează Graficul cu Utilaje"):
-            if coords and machines:
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
-                    image_path = tmpfile.name
-                success = plot_polygon_with_machines(coords, machines, save_path=image_path)
-                if success:
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmpfile:
-                        pdf_output_path = tmpfile.name
-                    generate_pdf(legend_text, image_path, pdf_output_path)
-                    st.success('PDF generat cu succes!')
-                    st.download_button(
-                        label="Descarcă PDF",
-                        data=open(pdf_output_path, "rb").read(),
-                        file_name="plot_with_legend.pdf",
-                        mime="application/pdf"
-                    )
-
-def extract_coordinates_from_pdf(pdf_path):
-    api_key = "YOUR_OPENAI_API_KEY"
-    url = "https://api.openai.com/v1/engines/davinci-codex/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-
-    with open(pdf_path, 'rb') as f:
-        pdf_data = f.read()
-
-    response = requests.post(
-        url,
-        headers=headers,
-        files={"file": pdf_data}
+    fig.update_layout(
+        dragmode="pan",
+        hovermode="closest",
+        width=800,
+        height=600
     )
 
-    if response.status_code == 200:
-        response_data = response.json()
-        coordinates = parse_coordinates(response_data)
-        return coordinates
-    else:
-        st.error("Eroare la extragerea coordonatelor din PDF.")
-        return None
+    return fig
 
-def parse_coordinates(response_data):
-    # Implement your logic to parse coordinates from the response data
-    # This might require custom logic based on the format of the response
-    pass
+def main():
+    st.title("Interactive Equipment Layout")
+
+    if st.session_state.equipment is None:
+        st.session_state.equipment = initialize_equipment()
+
+    fig = create_plot(st.session_state.equipment)
+    
+    selected_point = plotly_events(fig, click_event=True, hover_event=False)
+    
+    if selected_point:
+        point = selected_point[0]
+        equipment_id = point['customdata'][0]
+        new_x = point['x']
+        new_y = point['y']
+        
+        # Update equipment position
+        mask = st.session_state.equipment['id'] == equipment_id
+        st.session_state.equipment.loc[mask, 'x'] = new_x
+        st.session_state.equipment.loc[mask, 'y'] = new_y
+        
+        st.experimental_rerun()
+
+    st.subheader("Equipment List:")
+    for item in equipment_data:
+        st.write(f"{item['name']} - {item['count']} buc, {item['width']}m x {item['height']}m")
 
 if __name__ == "__main__":
     main()
+
 
